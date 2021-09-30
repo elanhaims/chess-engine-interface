@@ -9,6 +9,7 @@ from io import BytesIO
 import os
 import pyttsx3
 import cv2 as cv
+import sys
 
 tts_engine = pyttsx3.init()
 
@@ -127,33 +128,50 @@ class Chess_Game():
             current_screenshot = self.screenshot_util.screenshot_chess_board()
             # print(np.array_equal(previous_screenshot, current_screenshot))
             ssim = 1
+            mse = 0
             if previous_screenshot is not None:
-                ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
-                if ssim != 1:
-                    time.sleep(.4)
+                mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
+                if mse > 0:
+                    print("mse in if:" + str(mse))
+                    time.sleep(.05)
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
-                    ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
-                    print("2nd: " + str(ssim))
-            if ssim < .95:
+                    mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
+                    print("mse after sleep: " + str(mse))
+                #print("mse: " + str(mse))
+                #ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
+
+            if mse > 400:
+                print("mse:" + str(mse))
                 tts_engine.say("Board is obstructed")
                 tts_engine.runAndWait()
-            if ssim < .9999 or first_loop is False:
+            elif mse > 30 or first_loop is False:
                 first_loop = True
-                previous_screenshot = current_screenshot
                 board_fen, board_array, piece_locations = self.fetch_updated_board_position(current_screenshot)
                 if board_fen != previous_fen:
+                    previous_screenshot = current_screenshot
+
                     print(self.current_player)
                     previous_fen = board_fen
                     second_fen = self.generate_second_half_of_fen()
                     self.fen = self.board_fen + second_fen
                     board = chess.Board(self.fen)
+                    print(board)
                     if self.current_player == self.player_color:
-                        result = engine.play(board, chess.engine.Limit(time=1))
-                        print(result.move)
-                        tts_engine.say(str(result.move))
-                        tts_engine.runAndWait()
+                        try:
+                            result = engine.play(board, chess.engine.Limit(time=1))
+                            tts_engine.say(str(result.move))
+                            tts_engine.runAndWait()
+                            print(result.move)
+                        except:
+                            e = sys.exc_info()[0]
+                            print(e)
+                            print(board)
+                            tts_engine.say("error occured")
+                            tts_engine.runAndWait()
+
                     else:
                         tts_engine.say("Waiting on black to move")
+                        print("waiting on black to move")
                         tts_engine.runAndWait()
                 else:
                     print("testing")

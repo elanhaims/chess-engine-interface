@@ -72,3 +72,10 @@ class Converter:
     def compare_images(image1, image2):
         ssim = compute_ssim(image1, image2)
         return ssim
+
+    @staticmethod
+    def compare_images_mse(image1, image2):
+        err = np.sum((image1.astype("float") - image2.astype("float")) ** 2)
+        err /= float(image1.shape[0] * image1.shape[1])
+
+        return err
