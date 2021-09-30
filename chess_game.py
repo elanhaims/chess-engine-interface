@@ -44,7 +44,7 @@ class Chess_Game():
         board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(screenshot)
         if board_fen != self.board_fen:
             if self.board_fen:
-                self.moves += 1
+                self.moves += self.find_number_of_moves(chess_board_array_representation)
             self.previous_board_fen = self.board_fen
             self.previous_board_array = self.board_array
             self.previous_piece_locations = self.piece_locations
@@ -53,6 +53,21 @@ class Chess_Game():
             self.piece_locations = piece_locations
             self.current_player = "white" if self.moves % 2 == 0 else "black"
             return board_fen, chess_board_array_representation, piece_locations
+
+    def find_number_of_moves(self, new_board_array):
+        if self.board_array is None:
+            return 1
+        else:
+            moves = 0
+            for row in range(8):
+                for col in range(8):
+                    if not self.board_array[row][col] == new_board_array[row][col]:
+                        moves += 1
+            moves //= 2
+            return moves
+
+
+
 
     def generate_second_half_of_fen(self):
         second_half = " "
@@ -131,25 +146,26 @@ class Chess_Game():
             mse = 0
             if previous_screenshot is not None:
                 mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
+                #print(mse)
                 if mse > 0:
-                    print("mse in if:" + str(mse))
-                    time.sleep(.05)
+                    #print("mse in if:" + str(mse))
+                    time.sleep(.2)
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
                     mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
-                    print("mse after sleep: " + str(mse))
+                    #print("mse after sleep: " + str(mse))
                 #print("mse: " + str(mse))
                 #ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
 
-            if mse > 400:
+            if mse > 450:
                 print("mse:" + str(mse))
                 tts_engine.say("Board is obstructed")
                 tts_engine.runAndWait()
-            elif mse > 30 or first_loop is False:
+            elif mse > 20 or first_loop is False:
                 first_loop = True
                 board_fen, board_array, piece_locations = self.fetch_updated_board_position(current_screenshot)
                 if board_fen != previous_fen:
                     previous_screenshot = current_screenshot
-
+                    print(board_fen)
                     print(self.current_player)
                     previous_fen = board_fen
                     second_fen = self.generate_second_half_of_fen()
