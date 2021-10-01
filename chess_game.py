@@ -1,21 +1,21 @@
-import io
+import chess
+import chess.engine
 
-import chess, chess.engine
-import numpy as np
+import time
+
+import chess
+import chess.engine
+import pyttsx3
 
 import screenshot_converter
-import time
-from io import BytesIO
-import os
-import pyttsx3
-import cv2 as cv
-import sys
 
 tts_engine = pyttsx3.init()
 
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish")
 
-#f = BytesIO()
+# f = BytesIO()
+
+PIECE_MISSING = -10000
 
 
 class Chess_Game():
@@ -41,10 +41,18 @@ class Chess_Game():
         self.white_h_rook_moved = False
 
     def fetch_updated_board_position(self, screenshot):
-        board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(screenshot)
+        board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(
+            screenshot)
         if board_fen != self.board_fen:
+            moves = self.find_number_of_moves(chess_board_array_representation)
+            if moves == PIECE_MISSING:
+                print("went into piece missing")
+                return self.board_fen, self.board_array, self.piece_locations
+            elif self.check_if_castling_occurred(moves, piece_locations):
+                moves -= 1
             if self.board_fen:
-                self.moves += self.find_number_of_moves(chess_board_array_representation)
+                print("went into board fen")
+                self.moves += moves
             self.previous_board_fen = self.board_fen
             self.previous_board_array = self.board_array
             self.previous_piece_locations = self.piece_locations
@@ -63,12 +71,25 @@ class Chess_Game():
                 for col in range(8):
                     if not self.board_array[row][col] == new_board_array[row][col]:
                         moves += 1
+            if not moves % 2 == 0:
+                print("PIECE MISSING")
+                return PIECE_MISSING
             moves //= 2
             print(f"moves: {str(moves)}")
             return moves
 
-
-
+    def check_if_castling_occurred(self, moves, new_piece_locations):
+        moves /= 1
+        if moves == 1:
+            return False
+        if "e1" in self.piece_locations["white_king"] and ("c1" in new_piece_locations["white_king"] or
+                                                           "g1" in new_piece_locations["white_king"]):
+            return True
+        elif "e8" in self.piece_locations["black_king"] and ("c8" in new_piece_locations["black_king"] or
+                                                             "g8" in new_piece_locations["black_king"]):
+            return True
+        else:
+            return False
 
     def generate_second_half_of_fen(self):
         second_half = " "
@@ -127,7 +148,8 @@ class Chess_Game():
         current_piece_locations = self.piece_locations
         if not previous_piece_locations is None:
             for white_pawn in previous_piece_locations["white_pawn"]:
-                if white_pawn[1] == str(2) and white_pawn not in current_piece_locations["white_pawn"] and (white_pawn[0] + str(4)) \
+                if white_pawn[1] == str(2) and white_pawn not in current_piece_locations["white_pawn"] and (
+                        white_pawn[0] + str(4)) \
                         in current_piece_locations["white_pawn"]:
                     return white_pawn[0] + str(3)
             for black_pawn in previous_piece_locations["black_pawn"]:
@@ -147,17 +169,17 @@ class Chess_Game():
             mse = 0
             if previous_screenshot is not None:
                 mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
-                #print(mse)
+                # print(mse)
                 if mse > 0:
-                    #print("mse in if:" + str(mse))
+                    # print("mse in if:" + str(mse))
                     time.sleep(.2)
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
                     mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
-                    #print("mse after sleep: " + str(mse))
-                #print("mse: " + str(mse))
-                #ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
+                    # print("mse after sleep: " + str(mse))
+                # print("mse: " + str(mse))
+                # ssim = self.screenshot_util.compare_images(current_screenshot, previous_screenshot)
 
-            if mse > 450:
+            if mse > 700:
                 print("mse:" + str(mse))
                 tts_engine.say("Board is obstructed")
                 tts_engine.runAndWait()
@@ -192,9 +214,7 @@ class Chess_Game():
                         tts_engine.runAndWait()
                 else:
                     print("testing")
-            #time.sleep(2)
-
-
+            # time.sleep(2)
 
     #
     # def run(self):
