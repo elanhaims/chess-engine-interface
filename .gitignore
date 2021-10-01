@@ -155,7 +155,6 @@ stockfish/
 
 # Old reference files
 locate_pieces.py
-startup.py
 startup2.py
 testing.py
 testing2.py

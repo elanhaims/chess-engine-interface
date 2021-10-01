@@ -5,8 +5,8 @@ import chess_session
 
 
 def locate_piece(piece, board_screenshot):
-    template1 = cv.imread(f"new_pieces/{piece}_light.PNG", 0)
-    template2 = cv.imread(f"new_pieces/{piece}_dark.PNG", 0)
+    template1 = cv.imread(f"chess_pieces/{piece}_light.PNG", 0)
+    template2 = cv.imread(f"chess_pieces/{piece}_dark.PNG", 0)
 
     w, h = template1.shape[::-1]
     #print(f"w: {w} h: {h}")

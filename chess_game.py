@@ -64,6 +64,7 @@ class Chess_Game():
                     if not self.board_array[row][col] == new_board_array[row][col]:
                         moves += 1
             moves //= 2
+            print(f"moves: {str(moves)}")
             return moves
 
 
