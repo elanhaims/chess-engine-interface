@@ -1,7 +1,6 @@
 import numpy as np
 import cv2 as cv
-import chess_session
-
+from chess_session import PIECES
 
 
 def locate_piece(piece, board_screenshot):
@@ -9,7 +8,6 @@ def locate_piece(piece, board_screenshot):
     template2 = cv.imread(f"chess_pieces/{piece}_dark.PNG", 0)
 
     w, h = template1.shape[::-1]
-    #print(f"w: {w} h: {h}")
 
     res1 = cv.matchTemplate(board_screenshot, template1, cv.TM_CCOEFF_NORMED)
     res2 = cv.matchTemplate(board_screenshot, template2, cv.TM_CCOEFF_NORMED)
@@ -21,7 +19,6 @@ def locate_piece(piece, board_screenshot):
 
     loc2 = np.where(res2 >= threshold)
     yloc2, xloc2 = loc2
-    #print(len(xloc1))
 
     rectangles = []
     for (x, y) in zip(xloc1, yloc1):
@@ -32,10 +29,9 @@ def locate_piece(piece, board_screenshot):
         rectangles.append([int(x), int(y), int(w), int(h)])
         rectangles.append([int(x), int(y), int(w), int(h)])
 
-    # print(len(rectangles))
     rectangles, weights = cv.groupRectangles(rectangles, 1, 0.2)
-    # print(len(rectangles))
     return rectangles
+
 
 def find_centers(rectangles):
     centers = []
@@ -51,18 +47,13 @@ def add_pieces_to_board(piece, board, piece_locations, centers):
     locations = piece_locations
     if centers:
         for (x, y) in centers:
-            # print(chr(((x + 100) // 100 - 1) + 97))
             chess_file = chr(((x + 100) // 92 - 1) + 97)
             chess_rank = 9 - ((y + 100) // 92)
             if piece not in locations.keys():
                 locations[piece] = [chess_file + str(chess_rank)]
             else:
                 locations[piece].append(chess_file + str(chess_rank))
-            chess_board[chess_rank - 1][(x + 100) // 92 - 1] = chess_session.PIECES[piece]
+            chess_board[chess_rank - 1][(x + 100) // 92 - 1] = PIECES[piece]
 
-        #sorted_list = sorted(locations[piece], key=lambda x:x[0])
-        locations[piece] = sorted(locations[piece], key=lambda x: (x[0], x[1]))
+        locations[piece] = sorted(locations[piece], key=lambda Z: (Z[0], Z[1]))
     return chess_board, locations
-
-
-
