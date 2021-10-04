@@ -22,6 +22,13 @@ class Converter:
         gray = cv.resize(gray, (width, height), interpolation=cv.INTER_LINEAR)
         return gray
 
+    def get_player_color(self, board_screenshot):
+        board_width = (self.screenshot_info["width"] // 8) * 8
+        square_width = (board_width // 8)
+        queen = board_screenshot[7 * square_width:board_width, 3 * square_width:4 * square_width]
+        queen_pixel_color = queen[square_width // 2, square_width // 2]
+        return queen_pixel_color
+
     @staticmethod
     def convert_screenshot_to_chess_board_array_representation(board_screenshot):
         chess_board = np.zeros((8, 8), dtype='U2')

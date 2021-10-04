@@ -29,11 +29,12 @@ PIECE_MISSING = -10000
 
 
 class Chess_Game:
-    def __init__(self, screenshot_util: screenshot_converter):
+    def __init__(self, screenshot_util: screenshot_converter, white_pixel_color):
         self.screenshot_util = screenshot_util
         self.player_color = "white"
         self.current_player = "white"
         self.moves = 0
+        self.white_pixel_color = white_pixel_color
 
         self.previous_board_fen = None
         self.previous_board_array = None
@@ -44,6 +45,13 @@ class Chess_Game:
 
         self.white_castling_rights = Castling.CAN_CASTLE
         self.black_castling_rights = Castling.CAN_CASTLE
+
+    def get_player_color(self, board_screenshot):
+        queen_pixel_color = self.screenshot_util.get_player_color(board_screenshot)
+        print(f"queen_pixel_color: {queen_pixel_color}")
+        if queen_pixel_color != self.white_pixel_color:
+            self.player_color = "black"
+        print(f"player color: {self.player_color}")
 
     def fetch_updated_board_position(self, screenshot):
         board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(
@@ -175,6 +183,8 @@ class Chess_Game:
         first_loop = False
         while True:
             current_screenshot = self.screenshot_util.screenshot_chess_board()
+            if first_loop is False:
+                self.get_player_color(current_screenshot)
             mse = 0
             if previous_screenshot is not None:
                 mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
