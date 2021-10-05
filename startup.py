@@ -97,7 +97,7 @@ def take_screenshot(sct):
 
     black_king_dark = gray[0:square_width, 4 * square_width:5 * square_width]
     cv.imwrite("chess_pieces/black_king_dark.png", black_king_dark)
-    white_king_light = gray[7 * square_width:board_width, :5 * square_width]
+    white_king_light = gray[7 * square_width:board_width, 4 * square_width:5 * square_width]
     cv.imwrite("chess_pieces/white_king_light.png", white_king_light)
     black_queen_light = gray[0:square_width, 3 * square_width:4 * square_width]
     cv.imwrite("chess_pieces/black_queen_light.png", black_queen_light)

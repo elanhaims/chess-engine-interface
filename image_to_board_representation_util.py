@@ -1,6 +1,10 @@
 import numpy as np
 import cv2 as cv
-from chess_session import PIECES
+#from chess_session import PIECES
+
+PIECES = {"black_pawn": 'p', "black_rook": "r", "black_bishop": "b", "black_knight": "n", "black_king": "k",
+          "black_queen": "q", "white_pawn": "P", "white_rook": "R", "white_bishop": "B", "white_knight": "N",
+          "white_queen": "Q", "white_king": "K"}
 
 
 def locate_piece(piece, board_screenshot):

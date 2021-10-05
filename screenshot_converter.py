@@ -3,9 +3,11 @@ import cv2 as cv
 from skimage.metrics import structural_similarity as compute_ssim
 import image_to_board_representation_util as util
 from io import StringIO
-from chess_session import PIECES
+#from chess_session import PIECES
 
-
+PIECES = {"black_pawn": 'p', "black_rook": "r", "black_bishop": "b", "black_knight": "n", "black_king": "k",
+          "black_queen": "q", "white_pawn": "P", "white_rook": "R", "white_bishop": "B", "white_knight": "N",
+          "white_queen": "Q", "white_king": "K"}
 
 class Converter:
     def __init__(self, screenshot_info):

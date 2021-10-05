@@ -1,4 +1,4 @@
-import chess_game
+#import chess_game
 import startup
 import mss
 import screenshot_converter
@@ -18,6 +18,7 @@ class Chess_Session:
         self.monitor_number = 1
         self.monitor = None
         self.white_pixel_color = 248
+        self.screenshot_converter = None
 
     def perform_startup_process(self):
         (x, y, w, h, white_pixel_color) = startup.take_screenshot(self.sct)
@@ -26,6 +27,9 @@ class Chess_Session:
         self.width = w
         self.height = h
         self.white_pixel_color = white_pixel_color
+
+        screenshot_info_dict = self.create_sct_dict()
+        self.screenshot_converter = screenshot_converter.Converter(screenshot_info_dict)
 
     def set_monitor(self):
         mon = self.sct.monitors[self.monitor_number]
@@ -49,12 +53,16 @@ class Chess_Session:
         }
         return {"sct": self.sct, "monitor": monitor, "width": self.width}
 
+    # def create_and_run_chess_game(self):
+    #     game = chess_game.Chess_Game(self.screenshot_converter, self.white_pixel_color)
+    #     game.run()
+
 
 if __name__ == "__main__":
     session = Chess_Session()
-    #session.perform_startup_process()
+    session.perform_startup_process()
     screenshot_info = session.create_sct_dict()
     screenshot_converter = screenshot_converter.Converter(screenshot_info)
 
-    chess_game = chess_game.Chess_Game(screenshot_converter, session.white_pixel_color)
-    chess_game.run()
+    #chess_game = chess_game.Chess_Game(screenshot_converter, session.white_pixel_color)
+    #chess_game.run()
