@@ -31,14 +31,14 @@ class Converter:
         queen_pixel_color = queen[square_width // 2, square_width // 2]
         return queen_pixel_color
 
-    @staticmethod
-    def convert_screenshot_to_chess_board_array_representation(board_screenshot):
+    def convert_screenshot_to_chess_board_array_representation(self, board_screenshot, player_color):
         chess_board = np.zeros((8, 8), dtype='U2')
         piece_locations = {}
         for piece in PIECES.keys():
             rectangles = util.locate_piece(piece, board_screenshot)
             centers = util.find_centers(rectangles)
-            chess_board, piece_locations = util.add_pieces_to_board(piece, chess_board, piece_locations, centers)
+            width = int((self.screenshot_info["width"] // 8 * 8) / 8)
+            chess_board, piece_locations = util.add_pieces_to_board(piece, chess_board, piece_locations, centers, player_color, width)
         return chess_board, piece_locations
 
     @staticmethod
@@ -61,17 +61,17 @@ class Converter:
         fen_string = s.getvalue()
         return fen_string[:-1]
 
-    def generate_fen_from_image(self, screenshot):
+    def generate_fen_from_image(self, screenshot, player_color):
         board_image = screenshot
         chess_board_array_representation, piece_locations = \
-            self.convert_screenshot_to_chess_board_array_representation(board_image)
+            self.convert_screenshot_to_chess_board_array_representation(board_image, player_color)
         board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0))
         return board_fen, chess_board_array_representation, piece_locations
 
-    def screenshot_and_generate_fen(self):
+    def screenshot_and_generate_fen(self, player_color):
         board_image = self.screenshot_chess_board()
         chess_board_array_representation, piece_locations = \
-            self.convert_screenshot_to_chess_board_array_representation(board_image)
+            self.convert_screenshot_to_chess_board_array_representation(board_image, player_color)
         board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0))
         return board_fen, chess_board_array_representation, piece_locations
 

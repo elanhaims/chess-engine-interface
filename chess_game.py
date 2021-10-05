@@ -75,7 +75,7 @@ class Chess_Game:
 
     def fetch_updated_board_position(self, screenshot):
         board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(
-            screenshot)
+            screenshot, self.player_color)
         if board_fen != self.board_fen:
             moves = self.find_number_of_moves(chess_board_array_representation)
             if moves == PIECE_MISSING:
@@ -230,7 +230,11 @@ class Chess_Game:
                     fen = self.board_fen + second_fen
                     print(fen)
                     board = chess.Board(fen)
-                    print(board)
+
+                    if self.player_color == "black":
+                        print(board.transform(chess.flip_vertical))
+                    else:
+                        print(board)
                     if self.current_player == self.player_color:
                         try:
                             result = engine.play(board, chess.engine.Limit(time=1))
@@ -245,8 +249,8 @@ class Chess_Game:
                             tts_engine.runAndWait()
 
                     else:
-                        tts_engine.say("Waiting on black to move")
-                        print("waiting on black to move")
+                        tts_engine.say("Waiting on opponent to move")
+                        print("waiting on opponent to move")
                         tts_engine.runAndWait()
                 else:
                     print("Something went wrong")
