@@ -10,11 +10,11 @@ import chess.engine
 import pyttsx3
 
 import screenshot_converter
+#from gui import is_game_running
 
 tts_engine = pyttsx3.init()
 
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish")
-
 
 class Castling(Enum):
     CAN_CASTLE = 0
@@ -31,6 +31,7 @@ PIECE_MISSING = -10000
 class Chess_Game:
     def __init__(self, screenshot_util: screenshot_converter, white_pixel_color):
         self.screenshot_util = screenshot_util
+        self.game_running = True
         self.player_color = "white"
         self.current_player = "white"
         self.moves = 0
@@ -45,6 +46,25 @@ class Chess_Game:
 
         self.white_castling_rights = Castling.CAN_CASTLE
         self.black_castling_rights = Castling.CAN_CASTLE
+
+    def new_game(self):
+        self.game_running = True
+        self.player_color = "white"
+        self.current_player = "white"
+        self.moves = 0
+
+        self.previous_board_fen = None
+        self.previous_board_array = None
+        self.previous_piece_locations = None
+        self.board_fen = None
+        self.board_array = None
+        self.piece_locations = None
+
+        self.white_castling_rights = Castling.CAN_CASTLE
+        self.black_castling_rights = Castling.CAN_CASTLE
+
+    def stop_game(self):
+        self.game_running = False
 
     def get_player_color(self, board_screenshot):
         queen_pixel_color = self.screenshot_util.get_player_color(board_screenshot)
@@ -181,7 +201,8 @@ class Chess_Game:
         previous_fen = None
         previous_screenshot = None
         first_loop = False
-        while True:
+        while self.game_running:
+            #is_game_running():
             current_screenshot = self.screenshot_util.screenshot_chess_board()
             if first_loop is False:
                 self.get_player_color(current_screenshot)
