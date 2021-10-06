@@ -42,10 +42,12 @@ class Converter:
         return chess_board, piece_locations
 
     @staticmethod
-    def convert_array_to_FEN(chess_board_array):
+    def convert_array_to_FEN(chess_board_array, player_color):
         s = StringIO()
         for row in chess_board_array:
             empty = 0
+            if player_color == "black":
+                row = np.flip(row, 0)
             for cell in row:
                 if cell == "":
                     empty += 1
@@ -65,14 +67,14 @@ class Converter:
         board_image = screenshot
         chess_board_array_representation, piece_locations = \
             self.convert_screenshot_to_chess_board_array_representation(board_image, player_color)
-        board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0))
+        board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0), player_color)
         return board_fen, chess_board_array_representation, piece_locations
 
     def screenshot_and_generate_fen(self, player_color):
         board_image = self.screenshot_chess_board()
         chess_board_array_representation, piece_locations = \
             self.convert_screenshot_to_chess_board_array_representation(board_image, player_color)
-        board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0))
+        board_fen = self.convert_array_to_FEN(np.flip(chess_board_array_representation, axis=0), player_color)
         return board_fen, chess_board_array_representation, piece_locations
 
     @staticmethod

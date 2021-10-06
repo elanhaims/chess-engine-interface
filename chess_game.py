@@ -27,6 +27,8 @@ CASTLING_DICT = {Castling.CAN_CASTLE: "KQ", Castling.CAN_KINGSIDE_CASTLE: "K", C
                  Castling.CANNOT_CASTLE: ""}
 PIECE_MISSING = -10000
 
+STARTING_BOARD_FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"
+
 
 class Chess_Game:
     def __init__(self, screenshot_util: screenshot_converter, white_pixel_color):
@@ -36,6 +38,7 @@ class Chess_Game:
         self.current_player = "white"
         self.moves = 0
         self.white_pixel_color = white_pixel_color
+        self.first_move = True
 
         self.previous_board_fen = None
         self.previous_board_array = None
@@ -77,13 +80,14 @@ class Chess_Game:
         board_fen, chess_board_array_representation, piece_locations = self.screenshot_util.generate_fen_from_image(
             screenshot, self.player_color)
         if board_fen != self.board_fen:
-            moves = self.find_number_of_moves(chess_board_array_representation)
+            moves = self.find_number_of_moves(chess_board_array_representation, board_fen)
             if moves == PIECE_MISSING:
                 return self.board_fen, self.board_array, self.piece_locations
             elif self.check_if_castling_occurred(moves, piece_locations):
                 moves -= 1
-            if self.board_fen:
+            if self.board_fen or (board_fen != STARTING_BOARD_FEN and self.player_color == "black" and self.first_move):
                 self.moves += moves
+                self.first_move = False
             self.previous_board_fen = self.board_fen
             self.previous_board_array = self.board_array
             self.previous_piece_locations = self.piece_locations
@@ -96,7 +100,7 @@ class Chess_Game:
             self.check_castling_rights()
             return board_fen, chess_board_array_representation, piece_locations
 
-    def find_number_of_moves(self, new_board_array):
+    def find_number_of_moves(self, new_board_array, board_fen):
         if self.board_array is None:
             return 1
         else:
@@ -109,7 +113,6 @@ class Chess_Game:
                 print("PIECE MISSING")
                 return PIECE_MISSING
             moves = round(moves / 2)
-            print(f"moves: {str(moves)}")
             return moves
 
     def check_if_castling_occurred(self, moves, new_piece_locations):
@@ -202,7 +205,6 @@ class Chess_Game:
         previous_screenshot = None
         first_loop = False
         while self.game_running:
-            #is_game_running():
             current_screenshot = self.screenshot_util.screenshot_chess_board()
             if first_loop is False:
                 self.get_player_color(current_screenshot)
