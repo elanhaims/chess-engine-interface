@@ -80,7 +80,7 @@ def take_screenshot(sct):
 
     img2 = np.array(sct.grab(monitor2))
 
-    board_width = (w // 8) * 8
+    board_width = board_height = int((w // 8) * 8)
     square_width = board_width // 8
     print(f"square: {square_width}")
     gray = cv.cvtColor(img2, cv.COLOR_BGR2GRAY)
@@ -122,7 +122,7 @@ def take_screenshot(sct):
     #cv.imshow("queen", white_queen_dark)
     #cv.waitKey(0)
 
-    return(x, y, w, h, white_pixel_color)
+    return x, y, board_width, board_height, white_pixel_color
 
 
 

@@ -28,8 +28,17 @@ class Chess_Session:
         self.height = h
         self.white_pixel_color = white_pixel_color
 
+        mon = self.sct.monitors[self.monitor_number]
+        monitor = {
+            "top": mon["top"] + self.y_coord,
+            "left": mon["left"] + self.x_coord,
+            "width": self.width,
+            "height": self.height,
+            "mon": self.monitor_number,
+        }
+
         screenshot_info_dict = self.create_sct_dict()
-        self.screenshot_converter = screenshot_converter.Converter(screenshot_info_dict)
+        self.screenshot_converter = screenshot_converter.Converter(self.sct, monitor, self.width)
 
     def set_monitor(self):
         mon = self.sct.monitors[self.monitor_number]

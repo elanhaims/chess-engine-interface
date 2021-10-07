@@ -63,7 +63,10 @@ def locate_piece(piece: str, board_screenshot: np.ndarray) -> list:
 
 
 def find_centers(rectangles: list) -> list:
-    """Iterate through all of the rectangles and find the center pixel coordinate for each one."""
+    """Iterate through all of the rectangles and find the center pixel coordinate for each one.
+    
+    :param rectangles: List of tuples containing the x and y coordinates and the width and height of each rectangle
+    """
     centers = []
     for (x, y, w, h) in rectangles:
         x_cord = x + w // 2
@@ -72,8 +75,22 @@ def find_centers(rectangles: list) -> list:
     return centers
 
 
-def add_pieces_to_board(piece: str, board: np.ndarray, piece_locations: dict, centers: list, player_color: str,
-                        square_size: int) -> (np.ndarray, dict):
+def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: dict, centers: list, player_color: str,
+                              square_size: int) -> (np.ndarray, dict):
+    """
+    Fills in the chess board array and dictionary representations with the chess pieces.
+
+    A white rook on A1 will be stored as 'R' in chess_board[0][0] in the array and {"white_rook":["A1"]} in the
+    dictionary
+    
+    :param piece: The name of the chess piece e.g. 'white_pawn'
+    :param board: 2d array representation of the chess board
+    :param piece_locations: Dictionary with the piece names as keys and the square location for each piece as the value
+    :param centers: List of pixel coordinates for each piece
+    :param player_color: The color of the pieces the user is playing as
+    :param square_size: The size of the chess squares in pixel units
+    :return: The chess board array and dictionary with the piece parameter filled in
+    """
     chess_board = board
     locations = piece_locations
     if centers:

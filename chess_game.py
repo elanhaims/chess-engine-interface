@@ -48,7 +48,7 @@ class Chess_Game:
     the board and generate the new FEN repeatedly.
     """
     def __init__(self, screenshot_util: screenshot_converter, white_pixel_color: int):
-        """ Initializes the Chess_Game instance.
+        """Initializes the Chess_Game instance.
 
         :param screenshot_util: instance of the Converter class from screenshot_converter.py that is used to screenshot
         the board and convert the screenshot to a board state we can use. The Converter class builds three board states:
@@ -221,6 +221,7 @@ class Chess_Game:
         # If white already cannot castle do nothing
         if not self.white_castling_rights == Castling.CANNOT_CASTLE:
             # If white king moves white cannot castle either side
+            print(f"piece locations: {piece_locations}")
             if "e1" not in piece_locations["white_king"]:
                 self.white_castling_rights = Castling.CANNOT_CASTLE
             else:
@@ -307,11 +308,12 @@ class Chess_Game:
             # Update the player color if it is the first iteration of the loop
             if first_loop is False:
                 self.get_player_color(current_screenshot)
+                print(f"player color: {self.player_color}")
             mse = 0
             # Use the Mean Squared Error to determine if the new screenshot is different from the previous screenshot.
             # This is a fast way to compare the screenshots.
             if previous_screenshot is not None:
-                # Compute the MSE. This is an integer value. A value of zero means there is no difference between the
+                # Compute the MSE. This is a float value. A value of zero means there is no difference between the
                 # images. A high value for the MSE means there is a large value.
                 mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
                 # If the images are different, sleep for a short period of time and then take another screenshot. This
