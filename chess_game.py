@@ -47,15 +47,14 @@ class Chess_Game:
     castled, generates the second half of the FEN, and the main game loop that uses utility functions to screenshot
     the board and generate the new FEN repeatedly.
     """
-    def __init__(self, screenshot_util: screenshot_converter, white_pixel_color: int):
+
+    def __init__(self, screenshot_util: screenshot_converter):
         """Initializes the Chess_Game instance.
 
         :param screenshot_util: instance of the Converter class from screenshot_converter.py that is used to screenshot
         the board and convert the screenshot to a board state we can use. The Converter class builds three board states:
         a 2d array of the board, the board FEN for the position, and a dictionary containing the chess pieces as keys
         and arrays of the piece locations as the values.
-        :param white_pixel_color: the pixel value for the color of the white pieces. Used to determine if the user is
-        playing as the white or black pieces.
         """
         # Instance of Converter class
         self.screenshot_util = screenshot_util
@@ -67,8 +66,6 @@ class Chess_Game:
         self.current_player = "white"
         # The number of moves that have been made in the game
         self.moves = 0
-        # Pixel value of the white pieces
-        self.white_pixel_color = white_pixel_color
 
         # Current state of the board stored as just the board fen. An example of this is:
         # 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR'
@@ -94,15 +91,6 @@ class Chess_Game:
     def stop_game(self):
         """Stops the game loop from running. Is called when the 'Stop Game' button is pressed in the gui"""
         self.game_running = False
-
-    def get_player_color(self, board_screenshot: cv2.cvtColor):
-        """Calls a util function to get the player color by comparing a pixel value taken from the player's Queen
-
-        :param board_screenshot: a screenshot of the chess board
-        """
-        queen_pixel_color = self.screenshot_util.get_player_color(board_screenshot)
-        if queen_pixel_color != self.white_pixel_color:
-            self.player_color = "black"
 
     def fetch_updated_board_position(self, board_screenshot: cv2.cvtColor) -> (str, numpy.ndarray, dict):
         """Updates and returns the new board position
@@ -221,7 +209,6 @@ class Chess_Game:
         # If white already cannot castle do nothing
         if not self.white_castling_rights == Castling.CANNOT_CASTLE:
             # If white king moves white cannot castle either side
-            print(f"piece locations: {piece_locations}")
             if "e1" not in piece_locations["white_king"]:
                 self.white_castling_rights = Castling.CANNOT_CASTLE
             else:
@@ -307,8 +294,7 @@ class Chess_Game:
             current_screenshot = self.screenshot_util.screenshot_chess_board()
             # Update the player color if it is the first iteration of the loop
             if first_loop is False:
-                self.get_player_color(current_screenshot)
-                print(f"player color: {self.player_color}")
+                self.player_color = self.screenshot_util.get_player_color(current_screenshot)
             mse = 0
             # Use the Mean Squared Error to determine if the new screenshot is different from the previous screenshot.
             # This is a fast way to compare the screenshots.
@@ -345,11 +331,12 @@ class Chess_Game:
                         try:
                             # Compute the next best move from the chess engine
                             result = engine.play(board, chess.engine.Limit(time=1))
+                            # Prints the move
+                            print(result.move)
                             # Text to speech of the move
                             tts_engine.say(str(result.move))
                             tts_engine.runAndWait()
-                            # Prints the move
-                            print(result.move)
+
                         # In case of errors with the engine
                         except:
                             e = sys.exc_info()[0]

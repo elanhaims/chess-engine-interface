@@ -16,16 +16,18 @@ WHITE_TO_BLACK_SQUARES = {"1": "8", "2": "7", "3": "6", "4": "5", "5": "4", "6":
 
 class Converter:
     """Handles screenshotting and converting the chessboard into data structures that store the board position"""
-    def __init__(self, sct: mss.mss, monitor: dict, board_width: int):
+    def __init__(self, sct: mss.mss, monitor: dict, board_width: int, white_pixel_value: int):
         """Initializes the Converter instance
 
         :param sct: tool used to take screenshots of the user's monitor
         :param monitor: dictionary used as a parameter for taking the screenshot
         :param board_width: the width of the chessboard in pixels
+        :param white_pixel_value: the pixel color value of the white Queen
         """
         self.sct = sct
         self.monitor = monitor
         self.board_width = board_width
+        self.white_pixel_value = white_pixel_value
 
     def screenshot_chess_board(self) -> np.ndarray:
         """Takes a screenshot of the chess board"""
@@ -38,14 +40,20 @@ class Converter:
         gray = cv.resize(gray, (self.board_width, self.board_width), interpolation=cv.INTER_LINEAR)
         return gray
 
-    def get_player_color(self, board_screenshot: np.ndarray) -> int:
-        """Returns the pixel value of the user's Queen to determine if the player is playing as white or black pieces"""
+    def get_player_color(self, board_screenshot: np.ndarray) -> str:
+        """Returns the color of the pieces the user is playing as"""
         square_width = (self.board_width // 8)
         # Crops the board screenshot to get an image of just the user's Queen
         queen = board_screenshot[7 * square_width:self.board_width, 3 * square_width:4 * square_width]
         # Gets the pixel value from the center of the user's queen
-        queen_pixel_color = int(queen[square_width // 2, square_width // 2])
-        return queen_pixel_color
+        queen_pixel_value = int(queen[square_width // 2, square_width // 2])
+
+        # If the pixel value of the user's queen is equal to the pixel value of the white queen then the user is white
+        if queen_pixel_value == self.white_pixel_value:
+            return "white"
+        # Otherwise the user is playing as black
+        else:
+            return "black"
 
     def convert_screenshot_to_chess_board_array(self, board_screenshot: np.ndarray, player_color: str) -> (np.ndarray,
                                                                                                            dict):
