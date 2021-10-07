@@ -114,7 +114,7 @@ def take_screenshot(sct):
 
     white_queen = gray[7 * square_width:board_width, 3 * square_width:4 * square_width]
     #cv.imshow("qu", white_queen)
-    white_pixel_color = white_queen[square_width // 2, square_width // 2]
+    white_pixel_color = int(white_queen[square_width // 2, square_width // 2])
     print(white_pixel_color)
     black_queen = gray[0:square_width, 3 * square_width:4 * square_width]
     black_pixel_color = black_queen[square_width // 2, square_width // 2]
