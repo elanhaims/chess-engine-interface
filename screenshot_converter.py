@@ -2,7 +2,6 @@ import numpy as np
 import cv2 as cv
 from io import StringIO
 import mss
-import image_to_board_representation_util as util
 
 # Dictionary to convert piece names to their FEN representation
 PIECES = {"black_pawn": 'p', "black_rook": "r", "black_bishop": "b", "black_knight": "n", "black_king": "k",
@@ -37,8 +36,6 @@ class Converter:
         # Resizes the image to make the width and height perfectly divisible by 8 so the screenshot can be divided
         # up into an 8x8 grid of the chess squares
         gray = cv.resize(gray, (self.board_width, self.board_width), interpolation=cv.INTER_LINEAR)
-        # cv.imshow("Gray", gray)
-        # cv.waitKey(0)
         return gray
 
     def get_player_color(self, board_screenshot: np.ndarray) -> int:
@@ -59,19 +56,17 @@ class Converter:
         :return chess_board: 2d array representation of the chess board
         :return piece_locations: dictionary representation of the chess board
         """
-        print(f"col: {player_color}")
         chess_board = np.zeros((8, 8), dtype='U2')
         piece_locations = {}
         # Iterates over every piece
         for piece in PIECES.keys():
             # Builds a rectangle around each occurrence of the piece on the board
-            rectangles = util.locate_piece(piece, board_screenshot)
+            rectangles = locate_piece(piece, board_screenshot)
             # Gets the center pixel coordinate for each rectangle
-            centers = util.find_centers(rectangles)
+            centers = find_centers(rectangles)
             # Adds the piece to the array and dictionary
-            chess_board, piece_locations = util.add_pieces_to_board_array(piece, chess_board, piece_locations,
+            chess_board, piece_locations = add_pieces_to_board_array(piece, chess_board, piece_locations,
                                                                      centers, player_color, (self.board_width // 8))
-        print(f"board array: {chess_board}, piece_locations: {piece_locations}")
         return chess_board, piece_locations
 
     def generate_fen_from_image(self, board_screenshot: np.ndarray, player_color: str) -> (str, np.ndarray, dict):
@@ -94,11 +89,10 @@ def locate_piece(piece: str, board_screenshot: np.ndarray) -> list:
 
      :param piece: a string of the chess piece. Piece can be any value from the PIECES dict keys.
      :param board_screenshot: a screenshot of the chess board
-     :return: A List of rectangles around the pieces
 
-     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of
-     rectangles around all occurrences of the piece for further processing.
-    """
+     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of rectangles
+     around all occurrences of the piece for further processing.
+     """
 
     # The templates to use for template matching. Use two templates, one for the light square and one for the dark
     # square of a piece to make it easier for the piece to be detected.
@@ -137,11 +131,6 @@ def locate_piece(piece: str, board_screenshot: np.ndarray) -> list:
 
     # Call the opencv groupRectangles function to remove duplicate rectangles around pieces
     rectangles, weights = cv.groupRectangles(rectangles, 1, 0.2)
-
-    for (x, y, w, h) in rectangles:
-        cv.rectangle(board_screenshot, (x, y), (x + w, y + h), (0, 255, 255), 2)
-    cv.imshow("scr", board_screenshot)
-    cv.waitKey(0)
     return rectangles
 
 
@@ -149,7 +138,6 @@ def find_centers(rectangles: list) -> list:
     """Iterate through all of the rectangles and find the center pixel coordinate for each one.
 
     :param rectangles: List of tuples containing the x and y coordinates and the width and height of each rectangle
-    :return: A List of pixel coordinate values
     """
     centers = []
     for (x, y, w, h) in rectangles:
@@ -159,8 +147,7 @@ def find_centers(rectangles: list) -> list:
     return centers
 
 
-def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: dict, centers: list,
-                              player_color: str,
+def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: dict, centers: list, player_color: str,
                               square_size: int) -> (np.ndarray, dict):
     """
     Fills in the chess board array and dictionary representations with the chess pieces.
@@ -197,8 +184,7 @@ def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: di
             else:
                 locations[piece].append(chess_file + chess_rank)
             # Add the piece to the 2d array representation of the board
-            print(f"square size: {square_size}")
-            chess_board[int(chess_rank) - 1][((x + 100) // square_size) - 1] = PIECES[piece]
+            chess_board[int(chess_rank) - 1][(x + 100) // square_size - 1] = PIECES[piece]
         # Sort the piece locations, this is just for ease of use when testing and printing
         locations[piece] = sorted(locations[piece], key=lambda Z: (Z[0], Z[1]))
     return chess_board, locations

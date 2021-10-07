@@ -206,7 +206,7 @@ class Chess_Game:
 
         # Find a possible en passant square
         en_passant = self.find_en_passant(piece_locations)
-        en_passant_target = "- " if en_passant is None else en_passant + " "
+        en_passant_target = "- " if en_passant == "" else en_passant + " "
 
         # Half-move and move counter part of the FEN. Not currently finding half-moves so it is defaulted to 0
         move_number = "0 " + str(self.moves // 2)
@@ -315,14 +315,14 @@ class Chess_Game:
             if previous_screenshot is not None:
                 # Compute the MSE. This is a float value. A value of zero means there is no difference between the
                 # images. A high value for the MSE means there is a large value.
-                mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
+                mse = screenshot_converter.compare_images_mse(current_screenshot, previous_screenshot)
                 # If the images are different, sleep for a short period of time and then take another screenshot. This
                 # is to hopefully make it so a screenshot does not get taken when a piece is in the process of moving
                 # from one square to the other.
                 if mse > 0:
                     time.sleep(.2)
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
-                    mse = self.screenshot_util.compare_images_mse(current_screenshot, previous_screenshot)
+                    mse = screenshot_converter.compare_images_mse(current_screenshot, previous_screenshot)
             # If the MSE value is too large, this means the board is obstructed and we don't do anything
             if mse > 700:
                 print("mse:" + str(mse))
