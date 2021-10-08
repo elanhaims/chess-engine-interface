@@ -38,8 +38,8 @@ class Setup:
         x, y, w, h, = self.find_board_dimensions(self.sct)
         # Creates images of all of the chess pieces and gets a pixel value from the white Queen
         white_pixel_value, monitor = self.create_piece_screenshots(x, y, w, h, self.sct)
-        print("Startup completed")
-        tts_engine.say("Startup completed")
+        print("Setup completed")
+        tts_engine.say("Setup completed")
         tts_engine.runAndWait()
         return Converter(self.sct, monitor, w, white_pixel_value)
 
@@ -72,8 +72,12 @@ class Setup:
         found = None
         width = height = None
 
+        print("Beginning Setup")
+        tts_engine.say("Beginning Setup")
+        tts_engine.runAndWait()
+
         # Iterates over the starting chess board template at different sizes to locate the chess board on the monitor
-        for scale in np.linspace(.2, 1.0, 200)[::-1]:
+        for scale in np.linspace(.2, 1.0, 100)[::-1]:
 
             # Resize the template
             resized_template = imutils.resize(template, width=int(template.shape[1] * scale))

@@ -112,7 +112,7 @@ class Chess_Game:
                 return self.board_fen, self.board_array, self.piece_locations
             # If a player castles the 'find_number_of_moves' method will count that as two moves so we check if a
             # player castled on the previous move and subtract 1 from the moves if they have
-            elif self.check_if_castling_occurred(moves, piece_locations):
+            elif self.check_if_castling_occurred_last_move(moves, piece_locations):
                 moves -= 1
             # Don't update the number of moves the first time the screenshot is converted to a board position. Sometimes
             # when the user is playing as black the player with the white pieces will make a move before the user can
@@ -158,7 +158,7 @@ class Chess_Game:
             moves = round(differences / 2)
             return moves
 
-    def check_if_castling_occurred(self, moves: int, new_piece_locations: dict) -> bool:
+    def check_if_castling_occurred_last_move(self, moves: int, new_piece_locations: dict) -> bool:
         """Check if either of the players castled on their previous turn
 
         :param moves: The number of moves that have occurred between the previous position and the new one.
@@ -203,57 +203,50 @@ class Chess_Game:
         second_half_of_fen = current_player + castling + en_passant_target + move_number
         return second_half_of_fen
 
+    def check_castling_for_player(self, color) -> Castling:
+        """Checks a player's castling rights to see if it has changed.
+
+        :param color: The color of the pieces for which to check the castling rights
+        :return: Enum of the player's castling rights. Can be either CAN_CASTLE, CAN_KINGSIDE_CASTLE,
+        CAN_QUEENSIDE_CASTLE, or CANNOT_CASTLE
+        """
+        rank = "1" if color == "white" else "8"
+        piece_locations = self.piece_locations
+        castling_rights = self.white_castling_rights if color == "white" else self.black_castling_rights
+        if not castling_rights == Castling.CANNOT_CASTLE:
+            # If king moves then player cannot castle either side
+            if f"e{rank}" not in piece_locations[f"{color}_king"]:
+                return Castling.CANNOT_CASTLE
+            else:
+                # If player can castle both sides
+                if castling_rights == Castling.CAN_CASTLE:
+                    # If the 'a' rook moves player can no longer queenside castle so they can only kingside castle
+                    if f"{color}_rook" in piece_locations and f"a{rank}" not in piece_locations[f"{color}_rook"]:
+                        return Castling.CAN_KINGSIDE_CASTLE
+                    # If the 'h' rook moves player can no longer kingside castle so they can only queenside castle
+                    if f"{color}_rook" in piece_locations and f"h{rank}" not in piece_locations[f"{color}_rook"]:
+                        return Castling.CAN_QUEENSIDE_CASTLE
+                # If player can only queenside castle and their 'a' rook moves then they can no longer castle
+                elif castling_rights == Castling.CAN_QUEENSIDE_CASTLE and f"{color}_rook" in piece_locations \
+                        and f"a{rank}" not in \
+                        piece_locations[f"{color}_rook"]:
+                    return Castling.CANNOT_CASTLE
+                # If player can only kingside castle and their 'h' rook moves then they can no longer castle
+                elif castling_rights == Castling.CAN_KINGSIDE_CASTLE and f"{color}_rook" in piece_locations \
+                        and f"h{rank}" not in \
+                        piece_locations[f"{color}_rook"]:
+                    return Castling.CANNOT_CASTLE
+        # Return the original castling rights if the player's castling status has not changed
+        return castling_rights
+
     def check_castling_rights(self):
         """Updates the players' castling rights."""
-        piece_locations = self.piece_locations
         # If white already cannot castle do nothing
         if not self.white_castling_rights == Castling.CANNOT_CASTLE:
-            # If white king moves white cannot castle either side
-            if "e1" not in piece_locations["white_king"]:
-                self.white_castling_rights = Castling.CANNOT_CASTLE
-            else:
-                # If white can castle both sides
-                if self.white_castling_rights == Castling.CAN_CASTLE:
-                    # If the 'a' rook moves white can no longer queenside castle so they can only kingside castle
-                    if "white_rook" in piece_locations and "a1" not in piece_locations["white_rook"]:
-                        self.white_castling_rights = Castling.CAN_KINGSIDE_CASTLE
-                    # If the 'h' rook moves white can no longer kingside castle so they can only queenside castle
-                    if "white_rook" in piece_locations and "h1" not in piece_locations["white_rook"]:
-                        self.white_castling_rights = Castling.CAN_QUEENSIDE_CASTLE
-                # If white can only queenside castle and their 'a' rook moves then they can no longer castle
-                elif self.white_castling_rights == Castling.CAN_QUEENSIDE_CASTLE and "white_rook" in piece_locations \
-                        and "a1" not in \
-                        piece_locations["white_rook"]:
-                    self.white_castling_rights = Castling.CANNOT_CASTLE
-                # If white can only kingside castle and their 'h' rook moves then they can no longer castle
-                elif self.white_castling_rights == Castling.CAN_KINGSIDE_CASTLE and "white_rook" in piece_locations \
-                        and "h1" not in \
-                        piece_locations["white_rook"]:
-                    self.white_castling_rights = Castling.CANNOT_CASTLE
+            self.white_castling_rights = self.check_castling_for_player("white")
         # If black already cannot castle do nothing
         if not self.black_castling_rights == Castling.CANNOT_CASTLE:
-            # If black king moves black cannot castle either side
-            if "e8" not in piece_locations["black_king"]:
-                self.black_castling_rights = Castling.CANNOT_CASTLE
-            else:
-                # If black can castle both sides
-                if self.black_castling_rights == Castling.CAN_CASTLE:
-                    # If the 'a' rook moves black can no longer queenside castle so they can only kingside castle
-                    if "black_rook" in piece_locations and "a8" not in piece_locations["black_rook"]:
-                        self.black_castling_rights = Castling.CAN_KINGSIDE_CASTLE
-                    # If the 'h' rook moves black can no longer kingside castle so they can only queenside castle
-                    if "black_rook" in piece_locations and "h8" not in piece_locations["black_rook"]:
-                        self.black_castling_rights = Castling.CAN_QUEENSIDE_CASTLE
-                # If black can only queenside castle and their 'a' rook moves then they can no longer castle
-                elif self.black_castling_rights == Castling.CAN_QUEENSIDE_CASTLE and "black_rook" in piece_locations \
-                        and "a8" not in \
-                        piece_locations["black_rook"]:
-                    self.black_castling_rights = Castling.CANNOT_CASTLE
-                # If black can only kingside castle and their 'h' rook moves then they can no longer castle
-                elif self.black_castling_rights == Castling.CAN_KINGSIDE_CASTLE and "black_rook" in piece_locations \
-                        and "h8" not in \
-                        piece_locations["black_rook"]:
-                    self.black_castling_rights = Castling.CANNOT_CASTLE
+            self.black_castling_rights = self.check_castling_for_player("black")
 
     def find_en_passant(self, piece_locations: dict) -> str:
         """Finds any possible en passant squares. Returns a string of the square position if the en passant square
