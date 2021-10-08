@@ -14,6 +14,7 @@ import pyttsx3
 
 import screenshot_converter
 
+
 tts_engine = pyttsx3.init()
 
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish")
@@ -278,6 +279,7 @@ class Chess_Game:
         changed at all. If the screenshot has changed, fetch the updated position and have the engine compute the next
         best move from that position if the user is the next player to move.
         """
+
         previous_fen = None
         previous_screenshot = None
         first_loop = False
@@ -318,7 +320,6 @@ class Chess_Game:
 
                     board = chess.Board(self.fen)
                     # Currently the board is only being printed from white's perspective
-                    print(self.player_color)
                     print(board)
                     # If the user is the next player to make a move
                     if self.current_player == self.player_color:
@@ -327,6 +328,8 @@ class Chess_Game:
                             result = engine.play(board, chess.engine.Limit(time=1))
                             # Prints the move
                             print(result.move)
+                            from gui import move_var
+                            move_var.set(str(result.move))
                             # Text to speech of the move
                             tts_engine.say(str(result.move))
                             tts_engine.runAndWait()

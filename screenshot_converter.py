@@ -98,8 +98,8 @@ def locate_piece(piece: str, board_screenshot: np.ndarray) -> list:
      :param piece: a string of the chess piece. Piece can be any value from the PIECES dict keys.
      :param board_screenshot: a screenshot of the chess board
 
-     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of rectangles
-     around all occurrences of the piece for further processing.
+     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of
+     rectangles around all occurrences of the piece for further processing.
      """
 
     # The templates to use for template matching. Use two templates, one for the light square and one for the dark
