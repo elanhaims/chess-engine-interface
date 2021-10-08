@@ -325,6 +325,7 @@ class Chess_Game:
 
                     board = chess.Board(self.fen)
                     # Currently the board is only being printed from white's perspective
+                    print(self.player_color)
                     print(board)
                     # If the user is the next player to make a move
                     if self.current_player == self.player_color:

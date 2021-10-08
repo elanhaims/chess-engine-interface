@@ -49,7 +49,7 @@ class Converter:
         queen_pixel_value = int(queen[square_width // 2, square_width // 2])
 
         # If the pixel value of the user's queen is equal to the pixel value of the white queen then the user is white
-        if queen_pixel_value == self.white_pixel_value:
+        if queen_pixel_value in range(self.white_pixel_value - 10, self.white_pixel_value + 10):
             return "white"
         # Otherwise the user is playing as black
         else:
@@ -177,9 +177,9 @@ def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: di
         # Iterate over all of the values in centers
         for (x, y) in centers:
             # Convert the x coordinate value to a chess file e.g. 'a'
-            chess_file = chr(((x + 100) // square_size - 1) + 97)
+            chess_file = chr(((x + square_size) // square_size - 1) + 97)
             # Convert the y coordinate value to a chess rank e.g. '1'
-            chess_rank = str(9 - ((y + 100) // square_size))
+            chess_rank = str(9 - ((y + square_size) // square_size))
 
             # If the user is playing as the black pieces, flip the file and rank values e.g. 'a' -> 'h'
             if player_color == "black":
@@ -192,7 +192,7 @@ def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: di
             else:
                 locations[piece].append(chess_file + chess_rank)
             # Add the piece to the 2d array representation of the board
-            chess_board[int(chess_rank) - 1][(x + 100) // square_size - 1] = PIECES[piece]
+            chess_board[int(chess_rank) - 1][(x + square_size) // square_size - 1] = PIECES[piece]
         # Sort the piece locations, this is just for ease of use when testing and printing
         locations[piece] = sorted(locations[piece], key=lambda Z: (Z[0], Z[1]))
     return chess_board, locations
