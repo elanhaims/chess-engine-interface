@@ -1,8 +1,10 @@
+import cv2
 import cv2 as cv
 import numpy as np
 import mss
 from screenshot_converter import Converter
 import pyttsx3
+import imutils
 
 tts_engine = pyttsx3.init()
 
@@ -61,30 +63,41 @@ class Setup:
         img = np.array(sct.grab(monitor))
         # Convert the image to grayscale for image processing
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        gray = cv.Canny(gray, 50, 200)
+        imgH, imgW = gray.shape[:2]
 
         # Performs opencv template matching with the starting template to find the chess board in the screenshot
         template = cv.imread("starting_templates/starting_position.png", 0)
-        res1 = cv.matchTemplate(gray, template, cv.TM_CCOEFF_NORMED)
 
-        threshold = 0.75
-        w, h = template.shape[::-1]
-        loc = np.where(res1 >= threshold)
-        yloc, xloc = loc
+        found = None
+        width = height = None
 
-        rectangles = []
-        for (x, y) in zip(xloc, yloc):
-            rectangles.append([int(x), int(y), int(w), int(h)])
-            rectangles.append([int(x), int(y), int(w), int(h)])
+        # Iterates over the starting chess board template at different sizes to locate the chess board on the monitor
+        for scale in np.linspace(.2, 1.0, 200)[::-1]:
 
-        rectangles, weights = cv.groupRectangles(rectangles, 1, 0.2)
+            # Resize the template
+            resized_template = imutils.resize(template, width=int(template.shape[1] * scale))
 
-        # If there are no rectangles, that means the chess board could not have been detected
-        if len(rectangles) == 0:
-            raise Exception("Could not detect a chess board")
+            # If the resized template is larger than the screenshot we break
+            if resized_template.shape[0] > imgH or resized_template.shape[1] > imgW:
+                print("Could not find the chessboard")
+                break
 
-        # There should only be one value in rectangle so we can take the values from the first index
-        x, y, w, h = rectangles[0]
-        return x, y, w, h
+            # Apply Canny to the image to aid in the template matching
+            template_canny = cv2.Canny(resized_template, 50, 200)
+            result = cv.matchTemplate(gray, template_canny, cv.TM_CCOEFF)
+            # Find the largest result from the template matching
+            (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+
+            # If our new max val is greater than our previous one, then this template size is a better match and we
+            # keep it. Set the width and height to the resized template dimensions
+            if found is None or maxVal > found[0]:
+                found = (maxVal, maxLoc)
+                width, height = template_canny.shape[:2]
+
+        (_, maxLoc) = found
+        (startX, startY) = (int(maxLoc[0]), int(maxLoc[1]))
+        return startX, startY, width, height
 
     def create_piece_screenshots(self, x: float, y: float, w: float, h: float, sct: mss.mss) -> (int, dict):
         """Creates screenshots of every chess piece on the board to use for template matching
