@@ -328,8 +328,6 @@ class Chess_Game:
                             result = engine.play(board, chess.engine.Limit(time=1))
                             # Prints the move
                             print(result.move)
-                            from gui import move_var
-                            move_var.set(str(result.move))
                             # Text to speech of the move
                             tts_engine.say(str(result.move))
                             tts_engine.runAndWait()

@@ -26,7 +26,7 @@ class Converter:
         """
         self.sct = sct
         self.monitor = monitor
-        self.board_width = board_width
+        self.board_width = (board_width // 8) * 8
         self.white_pixel_value = white_pixel_value
 
     def screenshot_chess_board(self) -> np.ndarray:
@@ -55,7 +55,7 @@ class Converter:
         else:
             return "black"
 
-    def convert_screenshot_to_chess_board_array(self, board_screenshot: np.ndarray, player_color: str) -> (np.ndarray,
+    def convert_screenshot_to_chess_board_data(self, board_screenshot: np.ndarray, player_color: str) -> (np.ndarray,
                                                                                                            dict):
         """Builds the array and dictionary representation of the chess board using opencv template matching
 
@@ -87,7 +87,7 @@ class Converter:
         :return piece_locations: dictionary representation of the chess position
         """
         chess_board_array, piece_locations = \
-            self.convert_screenshot_to_chess_board_array(board_screenshot, player_color)
+            self.convert_screenshot_to_chess_board_data(board_screenshot, player_color)
         board_fen = convert_array_to_FEN(np.flip(chess_board_array, axis=0), player_color)
         return board_fen, chess_board_array, piece_locations
 

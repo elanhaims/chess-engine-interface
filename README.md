@@ -16,6 +16,7 @@ user on your friends list. You must also get their written permission to use a
 chess engine against them in the Chess.com game chat before the game begins. 
 Failure to follow these rules can result in the termination of your Chess.com account.
 
+
 ## Installation
 * Make sure you have python installed on your machine
 * Clone the repository to a directory of your choosing
@@ -67,5 +68,84 @@ on the piece you would like to move, and then click on the square you would like
   
 ## Code Walk-through
 
+### Gui.py
+ * The entry point of the program
+ *  Launches a simple tkinter gui with the buttons: 
+      * perform setup
+          * Calls a method from the setup.py file which is used to locate the chess board on the user's monitor and creates
+            the templates for all the chess pieces
+      * start game
+          * Calls the 'run' method from game.py as a separate thread to not block the gui thread
+          * Begins the main program loop 
+      * stop game 
+          * Terminates the 'run' method from game.py
+  
+### Setup.py
+* Performs the initialization of the program
+* Methods:
+    * find_board_dimensions
+        * Takes a screenshot of the user's monitor
+        * Repeatedly performs opencv template matching with the monitor 
+          screenshot and the starting chess board template at different sizes 
+            * Used to find the starting x and y coordinate and the size dimensions 
+              of the user's chess board on the monitor
+                * These values are used when taking all future screenshots to screenshot
+                    only the chess board instead of the entire monitor
+    * create_piece_screenshots
+        * Takes a screenshot of the chess board on the user's monitor
+        * Resizes the screenshot so that the width and height is perfectly divisible by 8
+            * This allows us to divide the screenshot into an 8x8 grid where each square
+                corresponds to a square on the chess board
+        * Makes a crop of every unique piece on light and dark squares and saves them in 
+          the 'chess_pieces' directory to use in template matching
+        * Samples a pixel from the middle of the white queen
+            * This is used to determine the color of the pieces the user is playing as at the 
+            start of a game
+
+### Screenshot_converter.py
+* Contains methods to take a screenshot the chessboard and converts the screenshot into multiple
+data structure representations of the chess board position
+* Methods:
+    * convert_screenshot_to_chess_board_data
+        * Builds a 2d array and a dictionary of the chess position by locating each 
+          piece using template matching
+            * Template matching gives us the pixel coordinate locations of each chess piece 
+                which we can use to determine the rank and file of the piece on the chess board
+    * convert_array_to_fen
+        * Iterates over the 2d array representation of the chess board and builds a
+            FEN string of the board position
+    * get_player_color
+        * Compares a pixel value of the user's queen with the pixel value of the white queen
+        to determine what color pieces the user is playing as
+          
+### Chess_game.py
+* Contains the main program loop and methods that build the second half
+of the FEN string which is used in the chess engine to find the optimal move to play in the position
+ * Methods:
+    * run
+        * Infinite loop that runs until the stop_game method is called
+        * Every iteration of the loop:
+            * Takes a screenshot of the chess board
+            * Compares the screenshot with the previous screenshot using the Mean Squared Error algorithm
+                to determine if the screenshots are different
+            * If the difference between the screenshots is too large, then the board
+                must be obstructed and we do nothing
+            * If the screenshots are slightly different, we update the board position
+                * The final board position is stored as a FEN string
+                * If the next player to make a move is the user, pass the FEN string into the chess engine which 
+                  returns the best move to play in the position
+
+                  
+## Chess Terminology and Resources
+
+FEN - https://www.chess.com/terms/fen-chess <br>
+En Passant - https://www.chess.com/terms/en-passant <br>
+Castling - https://support.chess.com/article/266-how-do-i-castle <br>
+Queenside Castling (long castling) - Castling with the rook on the A file <br>
+Kingside Castling (short castling) - Castling with the rook on the H file
+
 
 ## Future Plans for the project
+* Expand and improve the graphical user interface
+* Refactoring and code quality improvement  
+* Bug fixes
