@@ -167,7 +167,6 @@ class Setup:
 
         # Obtains a pixel value from the white_queen which is used to determining the color of the pieces the user is
         # playing as
-        white_queen = gray[7 * square_width:board_width, 3 * square_width:4 * square_width]
-        white_pixel_value = white_queen[square_width // 2, square_width // 2]
+        white_pixel_value = white_queen_dark[square_width // 2, square_width // 2]
 
         return white_pixel_value, board_monitor
