@@ -22,10 +22,13 @@ are not my own work and are only included to increase the ease of the installati
 ## Installation
 * Make sure you have python installed on your machine
 * Clone the repository to a directory of your choosing
+    * If you would like to clone the repository with all of the stockfish files included, 
+      clone from the branch "with_stockfish"
+    * If you would like to use a different engine or would just like to install stockfish yourself, 
+      clone from the 'main' branch  
 * Open a terminal window and navigate to the root directory of the project
 * Run the command 'pip install -r requirements.txt' to install all the necessary python modules <br>
-* If you do not wish to clone the repository with all the stockfish files:
-    * Clone the repository from the branch 'without_stockfish'
+* If you cloned the repository without the stockfish files:
     * Download your chess engine of choice
     * In line 20 of chess_game.py, replace "stockfish/stockfish" with the path to the chess engine executable:
   ```
