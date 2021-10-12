@@ -1,8 +1,10 @@
+import cv2
 import cv2 as cv
 import numpy as np
 import mss
 from screenshot_converter import Converter
 import pyttsx3
+import imutils
 
 tts_engine = pyttsx3.init()
 
@@ -36,8 +38,8 @@ class Setup:
         x, y, w, h, = self.find_board_dimensions(self.sct)
         # Creates images of all of the chess pieces and gets a pixel value from the white Queen
         white_pixel_value, monitor = self.create_piece_screenshots(x, y, w, h, self.sct)
-        print("Startup completed")
-        tts_engine.say("Startup completed")
+        print("Setup completed")
+        tts_engine.say("Setup completed")
         tts_engine.runAndWait()
         return Converter(self.sct, monitor, w, white_pixel_value)
 
@@ -61,30 +63,47 @@ class Setup:
         img = np.array(sct.grab(monitor))
         # Convert the image to grayscale for image processing
         gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
+        gray = cv.Canny(gray, 50, 200)
+        imgH, imgW = gray.shape[:2]
 
         # Performs opencv template matching with the starting template to find the chess board in the screenshot
         template = cv.imread("starting_templates/starting_position.png", 0)
-        res1 = cv.matchTemplate(gray, template, cv.TM_CCOEFF_NORMED)
 
-        threshold = 0.75
-        w, h = template.shape[::-1]
-        loc = np.where(res1 >= threshold)
-        yloc, xloc = loc
+        found = None
+        width = height = None
 
-        rectangles = []
-        for (x, y) in zip(xloc, yloc):
-            rectangles.append([int(x), int(y), int(w), int(h)])
-            rectangles.append([int(x), int(y), int(w), int(h)])
+        print("Beginning Setup")
+        tts_engine.say("Beginning Setup")
+        tts_engine.runAndWait()
 
-        rectangles, weights = cv.groupRectangles(rectangles, 1, 0.2)
+        size_ratio = img.shape[0] / template.shape[0]
 
-        # If there are no rectangles, that means the chess board could not have been detected
-        if len(rectangles) == 0:
-            raise Exception("Could not detect a chess board")
+        # Iterates over the starting chess board template at different sizes to locate the chess board on the monitor
+        for scale in np.linspace(.2, size_ratio, 200)[::-1]:
 
-        # There should only be one value in rectangle so we can take the values from the first index
-        x, y, w, h = rectangles[0]
-        return x, y, w, h
+            # Resize the template
+            resized_template = imutils.resize(template, width=int(template.shape[1] * scale))
+
+            # If the resized template is larger than the screenshot we break
+            if resized_template.shape[0] > imgH or resized_template.shape[1] > imgW:
+                print("Could not find the chessboard")
+                break
+
+            # Apply Canny to the image to aid in the template matching
+            template_canny = cv2.Canny(resized_template, 50, 200)
+            result = cv.matchTemplate(gray, template_canny, cv.TM_CCOEFF)
+            # Find the largest result from the template matching
+            (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+
+            # If our new max val is greater than our previous one, then this template size is a better match and we
+            # keep it. Set the width and height to the resized template dimensions
+            if found is None or maxVal > found[0]:
+                found = (maxVal, maxLoc)
+                width, height = template_canny.shape[:2]
+
+        (_, maxLoc) = found
+        (startX, startY) = (int(maxLoc[0]), int(maxLoc[1]))
+        return startX, startY, width, height
 
     def create_piece_screenshots(self, x: float, y: float, w: float, h: float, sct: mss.mss) -> (int, dict):
         """Creates screenshots of every chess piece on the board to use for template matching
@@ -128,14 +147,37 @@ class Setup:
             white = gray[board_width - square_width:board_width, k * square_width:k * square_width + square_width]
             cv.imwrite(f"chess_pieces/white_{PIECES[k]}_{SQUARE[(k + 1) % 2]}.png", white)
 
+        white_pixel = gray[10, 10]
+        print(white_pixel)
+        green_pixel = gray[board_width - 10, 10]
+        print(green_pixel)
+
+
         # Duplicates the screenshots for the King and Queen for both players because there is only one of each
         black_king_dark = gray[0:square_width, 4 * square_width:5 * square_width]
+
+        for row in range(len(black_king_dark)):
+            for col in range(len(black_king_dark[row])):
+                if black_king_dark[row][col] == white_pixel:
+                    black_king_dark[row][col] = green_pixel
         cv.imwrite("chess_pieces/black_king_dark.png", black_king_dark)
         white_king_light = gray[7 * square_width:board_width, 4 * square_width:5 * square_width]
+        for row in range(len(white_king_light)):
+            for col in range(len(white_king_light[row])):
+                if white_king_light[row][col] == green_pixel:
+                    white_king_light[row][col] = white_pixel
         cv.imwrite("chess_pieces/white_king_light.png", white_king_light)
         black_queen_light = gray[0:square_width, 3 * square_width:4 * square_width]
+        for row in range(len(black_queen_light)):
+            for col in range(len(black_queen_light[row])):
+                if black_queen_light[row][col] == green_pixel:
+                    black_queen_light[row][col] = white_pixel
         cv.imwrite("chess_pieces/black_queen_light.png", black_queen_light)
         white_queen_dark = gray[7 * square_width:board_width, 3 * square_width:4 * square_width]
+        for row in range(len(white_queen_dark)):
+            for col in range(len(white_queen_dark[row])):
+                if white_queen_dark[row][col] == white_pixel:
+                    white_queen_dark[row][col] = green_pixel
         cv.imwrite("chess_pieces/white_queen_dark.png", white_queen_dark)
 
         # Takes a screenshot of the pawns on a light and dark square
@@ -150,7 +192,9 @@ class Setup:
 
         # Obtains a pixel value from the white_queen which is used to determining the color of the pieces the user is
         # playing as
-        white_queen = gray[7 * square_width:board_width, 3 * square_width:4 * square_width]
-        white_pixel_value = white_queen[square_width // 2, square_width // 2]
+        white_pixel_value = white_queen_dark[square_width // 2, square_width // 2]
+
+        cv.imshow("board screenshot", img)
+        cv.waitKey(0)
 
         return white_pixel_value, board_monitor

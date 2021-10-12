@@ -26,6 +26,10 @@ game = None
 setup_performed = tk.BooleanVar(window, False)
 
 
+move_var = tk.StringVar(window, value="")
+label = tk.Label(window, textvariable=move_var)
+
+
 def perform_setup():
     """Method connected to a gui button that performs the setup."""
     setup_performed.set(True)

@@ -14,6 +14,7 @@ import pyttsx3
 
 import screenshot_converter
 
+
 tts_engine = pyttsx3.init()
 
 engine = chess.engine.SimpleEngine.popen_uci("stockfish/stockfish")
@@ -106,13 +107,13 @@ class Chess_Game:
         if board_fen != self.board_fen:
             # Finds the number of moves that have been played since the last position was saved. This value is usually 1
             # but can be more if the opponent plays a move very quickly.
-            moves = self.find_number_of_moves(chess_board_array_representation)
+            moves = self.find_number_of_moves(chess_board_array_representation, piece_locations)
             # If a piece was not registered from the screenshot return the previous board state without updating
             if moves == PIECE_MISSING:
                 return self.board_fen, self.board_array, self.piece_locations
             # If a player castles the 'find_number_of_moves' method will count that as two moves so we check if a
             # player castled on the previous move and subtract 1 from the moves if they have
-            elif self.check_if_castling_occurred(moves, piece_locations):
+            elif self.check_if_castling_occurred_last_move(moves, piece_locations):
                 moves -= 1
             # Don't update the number of moves the first time the screenshot is converted to a board position. Sometimes
             # when the user is playing as black the player with the white pieces will make a move before the user can
@@ -134,7 +135,7 @@ class Chess_Game:
             self.check_castling_rights()
             return board_fen, chess_board_array_representation, piece_locations
 
-    def find_number_of_moves(self, new_board_array: numpy.ndarray):
+    def find_number_of_moves(self, new_board_array: numpy.ndarray, new_piece_locations):
         """Find the number of moves that have occurred since the last stored position.
 
         :param new_board_array: a 2d array representation of the chess board
@@ -143,22 +144,72 @@ class Chess_Game:
             return 1
         else:
             differences = 0
+            piece_moves = []
             # Iterate through the 2d arrays. Compare the previous array with the new array. If an element is different
             # between the two arrays, increment the move counter by one.
             for row in range(8):
                 for col in range(8):
                     if not self.board_array[row][col] == new_board_array[row][col]:
                         differences += 1
+                        piece_moves.append((self.board_array[row][col], new_board_array[row][col]))
             # If there is only one difference between the arrays, a piece must have not been registered when converting
             # the screenshot so we return the PIECE_MISSING sentinel so we ignore the new board position
             if differences == 1:
                 print("PIECE MISSING")
                 return PIECE_MISSING
+
+            # Check if en passant occurred last move and subtract 1 from differences if it did
+            if self.check_if_en_passant_occurred_last_move(differences, new_piece_locations):
+                differences -= 1
+
             # Divide the differences by 2 to get the number of moves
             moves = round(differences / 2)
             return moves
 
-    def check_if_castling_occurred(self, moves: int, new_piece_locations: dict) -> bool:
+    def check_if_en_passant_occurred_last_move(self, differences: int, new_piece_locations: dict) -> bool:
+        """Checks if en passant occurred last move.
+
+        :param: differences: The number of differences between the previous board state and the new one
+        :param: new_piece_locations: Dictionary representation of the new board state
+        :return: True if en passant occurred last move and False if it did not
+        """
+        # En passant could not have occurred if differences is less than three
+        if differences < 3:
+            return False
+        white_en_passant = self.check_en_passant_for_player("white", new_piece_locations)
+        black_en_passant = self.check_en_passant_for_player("black", new_piece_locations)
+        return white_en_passant or black_en_passant
+
+    def check_en_passant_for_player(self, color: str, new_piece_locations: dict) -> bool:
+        """Checks if en passant occurred last move for a certain player.
+
+        :param: color: The color of the pieces to check for if en passant occurred
+        :param: new_piece_locations: Dictionary representation of the new board state
+        :return: True if the parameter piece color had a pawn captured en passant last move. False otherwise.
+        """
+        player_pawn = "white_pawn" if color == "white" else "black_pawn"
+        opponent_pawn = "black_pawn" if color == "white" else "white_pawn"
+        starting_rank = "4" if color == "white" else "5"
+        ending_rank = "3" if color == "white" else "6"
+        # Iterate over all of the pawns for the parameter color
+        for square in self.piece_locations[player_pawn]:
+            # If a pawn was on the en passant square in the last board state but is not in the new board state
+            if square[1] == starting_rank and square not in new_piece_locations[player_pawn]:
+                # If the opponents pawn was immediately to the left of the en passant pawn last turn but is on the
+                # en passant capture square next turn then en passant occurred
+                if chr(ord(square[0]) - 1) + starting_rank in self.piece_locations[opponent_pawn] and \
+                        chr(ord(square[0]) - 1) + starting_rank not in new_piece_locations[opponent_pawn] and \
+                        square[0] + ending_rank in new_piece_locations[opponent_pawn]:
+                    return True
+                # If the opponents pawn was immediately to the left of the en passant pawn last turn but is on the
+                # en passant capture square next turn then en passant occurred
+                if chr(ord(square[0]) + 1) + starting_rank in self.piece_locations[opponent_pawn] and \
+                        chr(ord(square[0]) + 1) + starting_rank not in new_piece_locations[opponent_pawn] and \
+                        square[0] + ending_rank in new_piece_locations[opponent_pawn]:
+                    return True
+        return False
+
+    def check_if_castling_occurred_last_move(self, moves: int, new_piece_locations: dict) -> bool:
         """Check if either of the players castled on their previous turn
 
         :param moves: The number of moves that have occurred between the previous position and the new one.
@@ -203,57 +254,50 @@ class Chess_Game:
         second_half_of_fen = current_player + castling + en_passant_target + move_number
         return second_half_of_fen
 
+    def check_castling_for_player(self, color) -> Castling:
+        """Checks a player's castling rights to see if it has changed.
+
+        :param color: The color of the pieces for which to check the castling rights
+        :return: Enum of the player's castling rights. Can be either CAN_CASTLE, CAN_KINGSIDE_CASTLE,
+        CAN_QUEENSIDE_CASTLE, or CANNOT_CASTLE
+        """
+        rank = "1" if color == "white" else "8"
+        piece_locations = self.piece_locations
+        castling_rights = self.white_castling_rights if color == "white" else self.black_castling_rights
+        if not castling_rights == Castling.CANNOT_CASTLE:
+            # If king moves then player cannot castle either side
+            if f"e{rank}" not in piece_locations[f"{color}_king"]:
+                return Castling.CANNOT_CASTLE
+            else:
+                # If player can castle both sides
+                if castling_rights == Castling.CAN_CASTLE:
+                    # If the 'a' rook moves player can no longer queenside castle so they can only kingside castle
+                    if f"{color}_rook" in piece_locations and f"a{rank}" not in piece_locations[f"{color}_rook"]:
+                        return Castling.CAN_KINGSIDE_CASTLE
+                    # If the 'h' rook moves player can no longer kingside castle so they can only queenside castle
+                    if f"{color}_rook" in piece_locations and f"h{rank}" not in piece_locations[f"{color}_rook"]:
+                        return Castling.CAN_QUEENSIDE_CASTLE
+                # If player can only queenside castle and their 'a' rook moves then they can no longer castle
+                elif castling_rights == Castling.CAN_QUEENSIDE_CASTLE and f"{color}_rook" in piece_locations \
+                        and f"a{rank}" not in \
+                        piece_locations[f"{color}_rook"]:
+                    return Castling.CANNOT_CASTLE
+                # If player can only kingside castle and their 'h' rook moves then they can no longer castle
+                elif castling_rights == Castling.CAN_KINGSIDE_CASTLE and f"{color}_rook" in piece_locations \
+                        and f"h{rank}" not in \
+                        piece_locations[f"{color}_rook"]:
+                    return Castling.CANNOT_CASTLE
+        # Return the original castling rights if the player's castling status has not changed
+        return castling_rights
+
     def check_castling_rights(self):
         """Updates the players' castling rights."""
-        piece_locations = self.piece_locations
         # If white already cannot castle do nothing
         if not self.white_castling_rights == Castling.CANNOT_CASTLE:
-            # If white king moves white cannot castle either side
-            if "e1" not in piece_locations["white_king"]:
-                self.white_castling_rights = Castling.CANNOT_CASTLE
-            else:
-                # If white can castle both sides
-                if self.white_castling_rights == Castling.CAN_CASTLE:
-                    # If the 'a' rook moves white can no longer queenside castle so they can only kingside castle
-                    if "white_rook" in piece_locations and "a1" not in piece_locations["white_rook"]:
-                        self.white_castling_rights = Castling.CAN_KINGSIDE_CASTLE
-                    # If the 'h' rook moves white can no longer kingside castle so they can only queenside castle
-                    if "white_rook" in piece_locations and "h1" not in piece_locations["white_rook"]:
-                        self.white_castling_rights = Castling.CAN_QUEENSIDE_CASTLE
-                # If white can only queenside castle and their 'a' rook moves then they can no longer castle
-                elif self.white_castling_rights == Castling.CAN_QUEENSIDE_CASTLE and "white_rook" in piece_locations \
-                        and "a1" not in \
-                        piece_locations["white_rook"]:
-                    self.white_castling_rights = Castling.CANNOT_CASTLE
-                # If white can only kingside castle and their 'h' rook moves then they can no longer castle
-                elif self.white_castling_rights == Castling.CAN_KINGSIDE_CASTLE and "white_rook" in piece_locations \
-                        and "h1" not in \
-                        piece_locations["white_rook"]:
-                    self.white_castling_rights = Castling.CANNOT_CASTLE
+            self.white_castling_rights = self.check_castling_for_player("white")
         # If black already cannot castle do nothing
         if not self.black_castling_rights == Castling.CANNOT_CASTLE:
-            # If black king moves black cannot castle either side
-            if "e8" not in piece_locations["black_king"]:
-                self.black_castling_rights = Castling.CANNOT_CASTLE
-            else:
-                # If black can castle both sides
-                if self.black_castling_rights == Castling.CAN_CASTLE:
-                    # If the 'a' rook moves black can no longer queenside castle so they can only kingside castle
-                    if "black_rook" in piece_locations and "a8" not in piece_locations["black_rook"]:
-                        self.black_castling_rights = Castling.CAN_KINGSIDE_CASTLE
-                    # If the 'h' rook moves black can no longer kingside castle so they can only queenside castle
-                    if "black_rook" in piece_locations and "h8" not in piece_locations["black_rook"]:
-                        self.black_castling_rights = Castling.CAN_QUEENSIDE_CASTLE
-                # If black can only queenside castle and their 'a' rook moves then they can no longer castle
-                elif self.black_castling_rights == Castling.CAN_QUEENSIDE_CASTLE and "black_rook" in piece_locations \
-                        and "a8" not in \
-                        piece_locations["black_rook"]:
-                    self.black_castling_rights = Castling.CANNOT_CASTLE
-                # If black can only kingside castle and their 'h' rook moves then they can no longer castle
-                elif self.black_castling_rights == Castling.CAN_KINGSIDE_CASTLE and "black_rook" in piece_locations \
-                        and "h8" not in \
-                        piece_locations["black_rook"]:
-                    self.black_castling_rights = Castling.CANNOT_CASTLE
+            self.black_castling_rights = self.check_castling_for_player("black")
 
     def find_en_passant(self, piece_locations: dict) -> str:
         """Finds any possible en passant squares. Returns a string of the square position if the en passant square
@@ -285,9 +329,11 @@ class Chess_Game:
         changed at all. If the screenshot has changed, fetch the updated position and have the engine compute the next
         best move from that position if the user is the next player to move.
         """
+
         previous_fen = None
         previous_screenshot = None
         first_loop = False
+        board_obstructed = False
         # Infinitely loop until the 'stop_game' method is called
         while self.game_running:
             # Get a screenshot of the chess board
@@ -310,13 +356,15 @@ class Chess_Game:
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
                     mse = screenshot_converter.compare_images_mse(current_screenshot, previous_screenshot)
             # If the MSE value is too large, this means the board is obstructed and we don't do anything
-            if mse > 700:
+            if mse > 700 and not board_obstructed:
                 print("mse:" + str(mse))
+                board_obstructed = True
                 tts_engine.say("Board is obstructed")
                 tts_engine.runAndWait()
             # If the screenshots are different that means the board position has changed
             elif mse > 20 or first_loop is False:
                 first_loop = True
+                board_obstructed = False
                 # Updates the board position
                 board_fen, board_array, piece_locations = self.fetch_updated_board_position(current_screenshot)
                 if board_fen != previous_fen:
@@ -331,10 +379,24 @@ class Chess_Game:
                         try:
                             # Compute the next best move from the chess engine
                             result = engine.play(board, chess.engine.Limit(time=1))
+                            squares = str(result.move)
+
+                            from_square = chess.parse_square(squares[0:2])
+                            to_square = chess.parse_square(squares[2:4])
+
+                            # Obtain the board state from playing the best move
+                            move = chess.Move(from_square, to_square)
+                            board.push(move)
+                            checkmate = ""
+                            # If the next move causes the game to end in checkmate, stop the loop
+                            if board.is_checkmate():
+                                self.game_running = False
+                                checkmate = " checkmate"
+                            board.pop()
                             # Prints the move
-                            print(result.move)
+                            print(str(result.move) + checkmate)
                             # Text to speech of the move
-                            tts_engine.say(str(result.move))
+                            tts_engine.say(str(result.move) + checkmate)
                             tts_engine.runAndWait()
 
                         # In case of errors with the engine

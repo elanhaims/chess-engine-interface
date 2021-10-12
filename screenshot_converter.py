@@ -26,7 +26,7 @@ class Converter:
         """
         self.sct = sct
         self.monitor = monitor
-        self.board_width = board_width
+        self.board_width = (board_width // 8) * 8
         self.white_pixel_value = white_pixel_value
 
     def screenshot_chess_board(self) -> np.ndarray:
@@ -49,13 +49,13 @@ class Converter:
         queen_pixel_value = int(queen[square_width // 2, square_width // 2])
 
         # If the pixel value of the user's queen is equal to the pixel value of the white queen then the user is white
-        if queen_pixel_value == self.white_pixel_value:
+        if queen_pixel_value in range(self.white_pixel_value - 10, self.white_pixel_value + 10):
             return "white"
         # Otherwise the user is playing as black
         else:
             return "black"
 
-    def convert_screenshot_to_chess_board_array(self, board_screenshot: np.ndarray, player_color: str) -> (np.ndarray,
+    def convert_screenshot_to_chess_board_data(self, board_screenshot: np.ndarray, player_color: str) -> (np.ndarray,
                                                                                                            dict):
         """Builds the array and dictionary representation of the chess board using opencv template matching
 
@@ -87,7 +87,7 @@ class Converter:
         :return piece_locations: dictionary representation of the chess position
         """
         chess_board_array, piece_locations = \
-            self.convert_screenshot_to_chess_board_array(board_screenshot, player_color)
+            self.convert_screenshot_to_chess_board_data(board_screenshot, player_color)
         board_fen = convert_array_to_FEN(np.flip(chess_board_array, axis=0), player_color)
         return board_fen, chess_board_array, piece_locations
 
@@ -98,8 +98,8 @@ def locate_piece(piece: str, board_screenshot: np.ndarray) -> list:
      :param piece: a string of the chess piece. Piece can be any value from the PIECES dict keys.
      :param board_screenshot: a screenshot of the chess board
 
-     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of rectangles
-     around all occurrences of the piece for further processing.
+     Uses opencv template matching to locate all occurrences of the piece on the chess board. Returns a list of
+     rectangles around all occurrences of the piece for further processing.
      """
 
     # The templates to use for template matching. Use two templates, one for the light square and one for the dark
@@ -177,9 +177,9 @@ def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: di
         # Iterate over all of the values in centers
         for (x, y) in centers:
             # Convert the x coordinate value to a chess file e.g. 'a'
-            chess_file = chr(((x + 100) // square_size - 1) + 97)
+            chess_file = chr(((x + square_size) // square_size - 1) + 97)
             # Convert the y coordinate value to a chess rank e.g. '1'
-            chess_rank = str(9 - ((y + 100) // square_size))
+            chess_rank = str(9 - ((y + square_size) // square_size))
 
             # If the user is playing as the black pieces, flip the file and rank values e.g. 'a' -> 'h'
             if player_color == "black":
@@ -192,7 +192,7 @@ def add_pieces_to_board_array(piece: str, board: np.ndarray, piece_locations: di
             else:
                 locations[piece].append(chess_file + chess_rank)
             # Add the piece to the 2d array representation of the board
-            chess_board[int(chess_rank) - 1][(x + 100) // square_size - 1] = PIECES[piece]
+            chess_board[int(chess_rank) - 1][(x + square_size) // square_size - 1] = PIECES[piece]
         # Sort the piece locations, this is just for ease of use when testing and printing
         locations[piece] = sorted(locations[piece], key=lambda Z: (Z[0], Z[1]))
     return chess_board, locations
