@@ -147,14 +147,37 @@ class Setup:
             white = gray[board_width - square_width:board_width, k * square_width:k * square_width + square_width]
             cv.imwrite(f"chess_pieces/white_{PIECES[k]}_{SQUARE[(k + 1) % 2]}.png", white)
 
+        white_pixel = gray[10, 10]
+        print(white_pixel)
+        green_pixel = gray[board_width - 10, 10]
+        print(green_pixel)
+
+
         # Duplicates the screenshots for the King and Queen for both players because there is only one of each
         black_king_dark = gray[0:square_width, 4 * square_width:5 * square_width]
+
+        for row in range(len(black_king_dark)):
+            for col in range(len(black_king_dark[row])):
+                if black_king_dark[row][col] == white_pixel:
+                    black_king_dark[row][col] = green_pixel
         cv.imwrite("chess_pieces/black_king_dark.png", black_king_dark)
         white_king_light = gray[7 * square_width:board_width, 4 * square_width:5 * square_width]
+        for row in range(len(white_king_light)):
+            for col in range(len(white_king_light[row])):
+                if white_king_light[row][col] == green_pixel:
+                    white_king_light[row][col] = white_pixel
         cv.imwrite("chess_pieces/white_king_light.png", white_king_light)
         black_queen_light = gray[0:square_width, 3 * square_width:4 * square_width]
+        for row in range(len(black_queen_light)):
+            for col in range(len(black_queen_light[row])):
+                if black_queen_light[row][col] == green_pixel:
+                    black_queen_light[row][col] = white_pixel
         cv.imwrite("chess_pieces/black_queen_light.png", black_queen_light)
         white_queen_dark = gray[7 * square_width:board_width, 3 * square_width:4 * square_width]
+        for row in range(len(white_queen_dark)):
+            for col in range(len(white_queen_dark[row])):
+                if white_queen_dark[row][col] == white_pixel:
+                    white_queen_dark[row][col] = green_pixel
         cv.imwrite("chess_pieces/white_queen_dark.png", white_queen_dark)
 
         # Takes a screenshot of the pawns on a light and dark square
