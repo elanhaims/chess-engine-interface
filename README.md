@@ -139,6 +139,8 @@ of the FEN string which is used in the chess engine to find the optimal move to 
 ## Chess Terminology and Resources
 
 FEN - https://www.chess.com/terms/fen-chess <br>
+Rank - A horizontal row of squares on the chess board <br>
+File - https://www.chess.com/terms/chess-file <br>
 En Passant - https://www.chess.com/terms/en-passant <br>
 Castling - https://support.chess.com/article/266-how-do-i-castle <br>
 Queenside Castling (long castling) - Castling with the rook on the A file <br>
