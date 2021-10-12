@@ -283,6 +283,7 @@ class Chess_Game:
         previous_fen = None
         previous_screenshot = None
         first_loop = False
+        board_obstructed = False
         # Infinitely loop until the 'stop_game' method is called
         while self.game_running:
             # Get a screenshot of the chess board
@@ -305,13 +306,15 @@ class Chess_Game:
                     current_screenshot = self.screenshot_util.screenshot_chess_board()
                     mse = screenshot_converter.compare_images_mse(current_screenshot, previous_screenshot)
             # If the MSE value is too large, this means the board is obstructed and we don't do anything
-            if mse > 700:
+            if mse > 700 and not board_obstructed:
                 print("mse:" + str(mse))
+                board_obstructed = True
                 tts_engine.say("Board is obstructed")
                 tts_engine.runAndWait()
             # If the screenshots are different that means the board position has changed
             elif mse > 20 or first_loop is False:
                 first_loop = True
+                board_obstructed = False
                 # Updates the board position
                 board_fen, board_array, piece_locations = self.fetch_updated_board_position(current_screenshot)
                 if board_fen != previous_fen:
@@ -326,10 +329,24 @@ class Chess_Game:
                         try:
                             # Compute the next best move from the chess engine
                             result = engine.play(board, chess.engine.Limit(time=1))
+                            squares = str(result.move)
+
+                            from_square = chess.parse_square(squares[0:2])
+                            to_square = chess.parse_square(squares[2:4])
+
+                            # Obtain the board state from playing the best move
+                            move = chess.Move(from_square, to_square)
+                            board.push(move)
+                            checkmate = ""
+                            # If the next move causes the game to end in checkmate, stop the loop
+                            if board.is_checkmate():
+                                self.game_running = False
+                                checkmate = " checkmate"
+                            board.pop()
                             # Prints the move
-                            print(result.move)
+                            print(str(result.move) + checkmate)
                             # Text to speech of the move
-                            tts_engine.say(str(result.move))
+                            tts_engine.say(str(result.move) + checkmate)
                             tts_engine.runAndWait()
 
                         # In case of errors with the engine

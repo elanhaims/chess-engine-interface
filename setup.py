@@ -76,8 +76,10 @@ class Setup:
         tts_engine.say("Beginning Setup")
         tts_engine.runAndWait()
 
+        size_ratio = img.shape[0] / template.shape[0]
+
         # Iterates over the starting chess board template at different sizes to locate the chess board on the monitor
-        for scale in np.linspace(.2, 1.0, 100)[::-1]:
+        for scale in np.linspace(.2, size_ratio, 200)[::-1]:
 
             # Resize the template
             resized_template = imutils.resize(template, width=int(template.shape[1] * scale))
@@ -168,5 +170,8 @@ class Setup:
         # Obtains a pixel value from the white_queen which is used to determining the color of the pieces the user is
         # playing as
         white_pixel_value = white_queen_dark[square_width // 2, square_width // 2]
+
+        cv.imshow("board screenshot", img)
+        cv.waitKey(0)
 
         return white_pixel_value, board_monitor
