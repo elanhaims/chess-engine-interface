@@ -16,6 +16,8 @@ user on your friends list. You must also get their written permission to use a
 chess engine against them in the Chess.com game chat before the game begins. 
 Failure to follow these rules can result in the termination of your Chess.com account.
 
+<br> I do not claim to own any of the files located in the stockfish directory. These files 
+are not my own work and are only included to increase the ease of the installation process.
 
 ## Installation
 * Make sure you have python installed on your machine
