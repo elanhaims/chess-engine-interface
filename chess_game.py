@@ -107,7 +107,7 @@ class Chess_Game:
         if board_fen != self.board_fen:
             # Finds the number of moves that have been played since the last position was saved. This value is usually 1
             # but can be more if the opponent plays a move very quickly.
-            moves = self.find_number_of_moves(chess_board_array_representation)
+            moves = self.find_number_of_moves(chess_board_array_representation, piece_locations)
             # If a piece was not registered from the screenshot return the previous board state without updating
             if moves == PIECE_MISSING:
                 return self.board_fen, self.board_array, self.piece_locations
@@ -135,7 +135,7 @@ class Chess_Game:
             self.check_castling_rights()
             return board_fen, chess_board_array_representation, piece_locations
 
-    def find_number_of_moves(self, new_board_array: numpy.ndarray):
+    def find_number_of_moves(self, new_board_array: numpy.ndarray, new_piece_locations):
         """Find the number of moves that have occurred since the last stored position.
 
         :param new_board_array: a 2d array representation of the chess board
@@ -144,20 +144,70 @@ class Chess_Game:
             return 1
         else:
             differences = 0
+            piece_moves = []
             # Iterate through the 2d arrays. Compare the previous array with the new array. If an element is different
             # between the two arrays, increment the move counter by one.
             for row in range(8):
                 for col in range(8):
                     if not self.board_array[row][col] == new_board_array[row][col]:
                         differences += 1
+                        piece_moves.append((self.board_array[row][col], new_board_array[row][col]))
             # If there is only one difference between the arrays, a piece must have not been registered when converting
             # the screenshot so we return the PIECE_MISSING sentinel so we ignore the new board position
             if differences == 1:
                 print("PIECE MISSING")
                 return PIECE_MISSING
+
+            # Check if en passant occurred last move and subtract 1 from differences if it did
+            if self.check_if_en_passant_occurred_last_move(differences, new_piece_locations):
+                differences -= 1
+
             # Divide the differences by 2 to get the number of moves
             moves = round(differences / 2)
             return moves
+
+    def check_if_en_passant_occurred_last_move(self, differences: int, new_piece_locations: dict) -> bool:
+        """Checks if en passant occurred last move.
+
+        :param: differences: The number of differences between the previous board state and the new one
+        :param: new_piece_locations: Dictionary representation of the new board state
+        :return: True if en passant occurred last move and False if it did not
+        """
+        # En passant could not have occurred if differences is less than three
+        if differences < 3:
+            return False
+        white_en_passant = self.check_en_passant_for_player("white", new_piece_locations)
+        black_en_passant = self.check_en_passant_for_player("black", new_piece_locations)
+        return white_en_passant or black_en_passant
+
+    def check_en_passant_for_player(self, color: str, new_piece_locations: dict) -> bool:
+        """Checks if en passant occurred last move for a certain player.
+
+        :param: color: The color of the pieces to check for if en passant occurred
+        :param: new_piece_locations: Dictionary representation of the new board state
+        :return: True if the parameter piece color had a pawn captured en passant last move. False otherwise.
+        """
+        player_pawn = "white_pawn" if color == "white" else "black_pawn"
+        opponent_pawn = "black_pawn" if color == "white" else "white_pawn"
+        starting_rank = "4" if color == "white" else "5"
+        ending_rank = "3" if color == "white" else "6"
+        # Iterate over all of the pawns for the parameter color
+        for square in self.piece_locations[player_pawn]:
+            # If a pawn was on the en passant square in the last board state but is not in the new board state
+            if square[1] == starting_rank and square not in new_piece_locations[player_pawn]:
+                # If the opponents pawn was immediately to the left of the en passant pawn last turn but is on the
+                # en passant capture square next turn then en passant occurred
+                if chr(ord(square[0]) - 1) + starting_rank in self.piece_locations[opponent_pawn] and \
+                        chr(ord(square[0]) - 1) + starting_rank not in new_piece_locations[opponent_pawn] and \
+                        square[0] + ending_rank in new_piece_locations[opponent_pawn]:
+                    return True
+                # If the opponents pawn was immediately to the left of the en passant pawn last turn but is on the
+                # en passant capture square next turn then en passant occurred
+                if chr(ord(square[0]) + 1) + starting_rank in self.piece_locations[opponent_pawn] and \
+                        chr(ord(square[0]) + 1) + starting_rank not in new_piece_locations[opponent_pawn] and \
+                        square[0] + ending_rank in new_piece_locations[opponent_pawn]:
+                    return True
+        return False
 
     def check_if_castling_occurred_last_move(self, moves: int, new_piece_locations: dict) -> bool:
         """Check if either of the players castled on their previous turn
