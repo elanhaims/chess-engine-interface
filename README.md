@@ -22,10 +22,13 @@ are not my own work and are only included to increase the ease of the installati
 ## Installation
 * Make sure you have python installed on your machine
 * Clone the repository to a directory of your choosing
+    * If you would like to clone the repository with all of the stockfish files included, 
+      clone from the branch "with_stockfish"
+    * If you would like to use a different engine or would just like to install stockfish yourself, 
+      clone from the 'main' branch  
 * Open a terminal window and navigate to the root directory of the project
 * Run the command 'pip install -r requirements.txt' to install all the necessary python modules <br>
-* If you do not wish to clone the repository with all the stockfish files:
-    * Clone the repository from the branch 'without_stockfish'
+* If you cloned the repository without the stockfish files:
     * Download your chess engine of choice
     * In line 20 of chess_game.py, replace "stockfish/stockfish" with the path to the chess engine executable:
   ```
@@ -33,7 +36,7 @@ are not my own work and are only included to increase the ease of the installati
     ```
 
 ## Chess.com Board Setup
-For the best results when using this program, there are a few settings you must use for the chess board. <br>
+To ensure everything works correctly, there are a few settings you must use for the chess board. <br>
 First, make sure that your Chess.com window is opened on your main computer monitor. <br>
 Then, copy the following settings under the Chess.com board settings:
 ![Settings](starting_templates/settings.PNG)
@@ -51,6 +54,10 @@ the terminal window to somewhere visible to see print statements. <br>
 
 * Click the 'Perform Setup' button to initialize the project.
 This may take a few seconds and only needs to be done once each time you run the program.
+  * When the setup completes, a window will pop up displaying the chess board. If the image does not look like a
+    perfect crop of the chess board, try resizing the window and running the setup again. 
+    * Close the pop up window
+    to continue using the program.
   * After you run the setup, make sure to not move or resize the chess window, or the program will not work.
 * After the setup has completed, you can begin a game of chess. Once you are matched 
 against an opponent, click the 'start game' button on the gui to begin getting the optimal chess moves.
