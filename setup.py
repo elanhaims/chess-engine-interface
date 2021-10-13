@@ -148,9 +148,7 @@ class Setup:
             cv.imwrite(f"chess_pieces/white_{PIECES[k]}_{SQUARE[(k + 1) % 2]}.png", white)
 
         white_pixel = gray[10, 10]
-        print(white_pixel)
         green_pixel = gray[board_width - 10, 10]
-        print(green_pixel)
 
 
         # Duplicates the screenshots for the King and Queen for both players because there is only one of each
